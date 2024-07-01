@@ -1,0 +1,240 @@
+
+    artist_id INT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    country VARCHAR(50) NOT NULL,
+    birth_year INT NOT NULL
+);
+
+CREATE TABLE artworks (
+    artwork_id INT PRIMARY KEY,
+    title VARCHAR(200) NOT NULL,
+    artist_id INT NOT NULL,
+    genre VARCHAR(50) NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (artist_id) REFERENCES artists(artist_id)
+);
+
+CREATE TABLE sales (
+    sale_id INT PRIMARY KEY,
+    artwork_id INT NOT NULL,
+    sale_date DATE NOT NULL,
+    quantity INT NOT NULL,
+    total_amount DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (artwork_id) REFERENCES artworks(artwork_id)
+);
+
+INSERT INTO artists (artist_id, name, country, birth_year) VALUES
+(1, 'Vincent van Gogh', 'Netherlands', 1853),
+(2, 'Pablo Picasso', 'Spain', 1881),
+(3, 'Leonardo da Vinci', 'Italy', 1452),
+(4, 'Claude Monet', 'France', 1840),
+(5, 'Salvador Dalí', 'Spain', 1904);
+
+INSERT INTO artworks (artwork_id, title, artist_id, genre, price) VALUES
+(1, 'Starry Night', 1, 'Post-Impressionism', 1000000.00),
+(2, 'Guernica', 2, 'Cubism', 2000000.00),
+(3, 'Mona Lisa', 3, 'Renaissance', 3000000.00),
+(4, 'Water Lilies', 4, 'Impressionism', 500000.00),
+(5, 'The Persistence of Memory', 5, 'Surrealism', 1500000.00);
+
+INSERT INTO sales (sale_id, artwork_id, sale_date, quantity, total_amount) VALUES
+(1, 1, '2024-01-15', 1, 1000000.00),
+(2, 2, '2024-02-10', 1, 2000000.00),
+(3, 3, '2024-03-05', 1, 3000000.00),
+(4, 4, '2024-04-20', 2, 1000000.00)
+
+
+
+--1.Write a query to display the artist names in uppercase.
+ select upper (name) from artists
+
+--2. Write a query to find the total amount of sales for the artwork 'Mona Lisa'.
+select sum(price) as Total_amount  from artworks
+where title='Mona Lisa'
+
+
+--3. Write a query to calculate the price of 'Starry Night' plus 10% tax.
+select (Price*0.1)as Total from  artworks 
+where title='Starry Night'
+
+
+--4. Write a query to extract the year from the sale date of 'Guernica'.
+select  from artists
+--### Section 2: 2 marks each
+
+select * from artists
+select * from artworks
+select * from sales
+--5. Write a query to display artists who have artworks in multiple genres.
+select name,artist_id from artists a
+where artist_id in (select r.artist_id from artworks 
+join 
+artworks r
+on a.artist_id  =r.artist_id 
+and r.genre<>r.genre)
+
+
+
+--6. Write a query to find the artworks that have the highest sale total for each genre.
+
+--7. Write a query to find the average price of artworks for each artist.
+
+
+--8. Write a query to find the top 2 highest-priced artworks and the total quantity sold for each.
+select top(2) a.name, sum(r.price) as TotalSales ,
+
+rank() over(order by sum(r.price) desc) as ranks from artists a
+
+left join artworks r on  a.artist_id=r.artist_id
+
+group by a.name
+
+
+
+
+
+
+--9. Write a query to find the artists who have sold more artworks than the average number of artworks sold per artist.
+
+--10. Write a query to display artists whose birth year is earlier than the average birth year of artists from their country.
+
+--11. Write a query to find the artists who have created artworks in both 'Cubism' and 'Surrealism' genres.
+
+(select name from artists 
+     where artist_id in (select  artist_id from artists where genre='Cubism'))
+intersect 
+(select title from artworks
+     where artist_id in (select  artist_id from artworks where genre='Surrealism'))
+
+
+--12. Write a query to find the artworks that have been sold in both January and February 2024.
+select title,sale_date from sales s
+inner join artworks a
+on s.artwork_id=a.artwork_id
+where sale_date in (1,2)  
+
+--13. Write a query to display the artists whose average artwork price is higher than every artwork price in the 'Renaissance' genre.
+
+--14. Write a query to rank artists by their total sales amount and display the top 3 artists.
+
+select top(3) a.name, sum(r.price) as TotalSales ,
+
+rank() over(order by sum(r.price) desc) as ranks from artists a
+
+left join artworks r on  a.artist_id=r.artist_id
+group by a.name
+
+--15. Write a query to create a non-clustered index on the `sales` table to improve query performance for queries filtering by `artwork_id`.
+
+----### Section 3: 3 Marks Questions
+
+----16.  Write a query to find the average price of artworks for each artist and only include artists
+--whose average artwork price is higher than the overall average artwork price.
+
+
+----17.  Write a query to create a view that shows artists who have created artworks in multiple genres.
+go
+create view  show_artist
+as
+select a.artist_id,count(genre)as multiple_genres from artists a
+inner join artworks r
+on a.artist_id=r.artist_id
+group by a.artist_id
+having count(genre)>2
+go
+select * from show_artist
+
+
+
+
+--18.  Write a query to find artworks that have a higher price than the average price of artworks by the same artist.
+
+select * from artists
+where 
+--### Section 4: 4 Marks Questions
+
+----19.  Write a query to convert the artists and their artworks into JSON format.
+
+select * from artworks
+select * from artists
+
+select a.artist_id,a.name,a.country,a.birth_year ,
+
+(select r.artist_id,r.title,r.genre,r.price from artworks a where a.artist_id=r.artist_id
+
+for json PATH
+
+)as artists
+
+from artworks r
+
+for json PATH, root('artists')
+
+--select artist_id,name,country,birth_ear,
+
+
+
+----20.  Write a query to export the artists and their artworks into XML format.
+
+
+select artist_id,name,country,birth_year,
+
+(select artist_id,a.name,a.birth_year from artists a
+
+where a.artist_id=artist_id
+
+for XML PATH('name'), type
+
+)as artworks
+
+from artists a for XML PATH('artists'), root('artists')
+
+--#### Section 5: 5 Marks Questions
+
+--21. Create a stored procedure to add a new sale and update the total sales for the artwork. Ensure the quantity is positive, and use transactions to maintain data integrity.
+
+alter procedure sp_Addnewsales
+
+@sale_id int,@artwork_id int ,@sale_date date ,@quantity int,@total_amount decimal(5,2)
+as
+begin
+  begin transaction;
+  BEGIN TRY
+  if not exists (select * from artworks where artwork_id=@artwork_id)
+  insert into sales values
+  (@sale_id ,@artwork_id, @sale_date, @quantity, @total_amount);
+
+  commit transaction;
+
+   select sum(quantity ) as totalQty from sales where artwork_id=@artwork_id;
+  end try
+  begin catch 
+	rollback transaction;
+  end catch    
+end
+go
+
+
+
+
+--22. Create a multi-statement table-valued function (MTVF) to return the total quantity sold for each genre and use it in a query to display the results.
+create function dbo.totalQtyGenre()
+returns @tempTb Table ( genre varchar(max),Qty int)
+as
+begin
+insert into @tempTb 
+      select r.genre, sum(s.quantity) as totalQty 
+	          from artworks r 
+
+left join sales s on s.artwork_id=r.artwork_id
+group by r.genre;
+return;
+end
+select * from dbo.totalQtyGenre()
+ 
+
+--23. Create a scalar function to calculate the average sales amount for artworks in a given genre and write a query to use this function for 'Impressionism'.
+
+--24. Create a trigger to log changes to the `artworks` table into an `artworks_log` table, capturing the `artwork_id`, `title`, and a change description.
+
+--25. Write a query to create an NTILE distribution of artists based on their total sales, divided into 4 tiles.
